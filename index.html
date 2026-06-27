@@ -1,0 +1,1270 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<title>🏡 Nuestras Cuentas</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800;900&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+:root {
+  /* Pastel palette */
+  --bg:       #F5F0FF;
+  --surface:  #FFFFFF;
+  --surface2: #FAF7FF;
+  --border:   #E4D9FF;
+  --border2:  #CFC2FF;
+
+  /* Text */
+  --ink:      #2D2550;
+  --sub:      #7A6E9E;
+  --ghost:    #B8AFCE;
+
+  /* Accent pastels */
+  --green:    #5EB99F;
+  --green-bg: #E6F7F3;
+  --green-bd: #B2E4D8;
+
+  --red:      #E07070;
+  --red-bg:   #FDEAEA;
+  --red-bd:   #F5C0C0;
+
+  --blue:     #6B94E8;
+  --blue-bg:  #EBF0FD;
+  --blue-bd:  #C0D2F8;
+
+  --yellow:   #D4A843;
+  --yellow-bg:#FDF6E3;
+  --yellow-bd:#F0DDA0;
+
+  --purple:   #9B7FE8;
+  --purple-bg:#F0EBFF;
+  --purple-bd:#D4C4FF;
+
+  --pink:     #E07AA8;
+  --pink-bg:  #FDEAF3;
+  --pink-bd:  #F5C0D8;
+
+  --r:  14px;
+  --r2: 10px;
+  --r3: 20px;
+  --font: 'Nunito', sans-serif;
+  --mono: 'DM Mono', monospace;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0 }
+html { font-size: 15px }
+body { font-family: var(--font); background: var(--bg); color: var(--ink); min-height: 100vh; -webkit-tap-highlight-color: transparent }
+::-webkit-scrollbar { width: 4px; height: 4px }
+::-webkit-scrollbar-track { background: var(--bg) }
+::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px }
+
+/* ─── HEADER ─── */
+#app-header {
+  position: sticky; top: 0; z-index: 200;
+  background: rgba(245,240,255,.96); backdrop-filter: blur(16px);
+  border-bottom: 2px solid var(--border);
+  height: 60px; display: flex; align-items: center; padding: 0 16px; gap: 10px;
+}
+.logo {
+  font-size: 1.1rem; font-weight: 900; letter-spacing: -.3px; flex: 1;
+  color: var(--purple);
+}
+.hdr-balance {
+  font-family: var(--mono); font-size: .82rem; font-weight: 500;
+  padding: 5px 12px; border-radius: var(--r3);
+  background: var(--surface); border: 1.5px solid var(--border);
+  color: var(--sub);
+}
+.hdr-balance.pos { color: var(--green); border-color: var(--green-bd); background: var(--green-bg) }
+.hdr-balance.neg { color: var(--red);   border-color: var(--red-bd);   background: var(--red-bg) }
+.btn-hdr {
+  background: var(--surface); border: 1.5px solid var(--border);
+  border-radius: var(--r2); padding: 5px 12px;
+  font-family: var(--font); font-size: .75rem; font-weight: 700;
+  color: var(--sub); cursor: pointer; transition: .2s; white-space: nowrap;
+}
+.btn-hdr:hover { border-color: var(--purple); color: var(--purple) }
+
+/* sync */
+.sync-pill {
+  display: flex; align-items: center; gap: 5px;
+  background: var(--surface); border: 1.5px solid var(--border);
+  border-radius: var(--r3); padding: 5px 12px; cursor: pointer;
+  font-size: .72rem; font-weight: 700; color: var(--sub); transition: .2s;
+}
+.sync-pill:hover { border-color: var(--blue); color: var(--blue) }
+.sync-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--ghost); flex-shrink: 0; transition: .3s }
+.sync-dot.ok     { background: var(--green); box-shadow: 0 0 6px var(--green) }
+.sync-dot.syncing{ background: var(--yellow); animation: pulse 1s infinite }
+.sync-dot.err    { background: var(--red) }
+@keyframes pulse { 0%,100%{opacity:1}50%{opacity:.3} }
+
+/* ─── NAV ─── */
+#app-nav {
+  display: flex; background: var(--surface); border-bottom: 2px solid var(--border);
+  overflow-x: auto; scrollbar-width: none; position: sticky; top: 60px; z-index: 190;
+}
+#app-nav::-webkit-scrollbar { display: none }
+.nav-tab {
+  flex: 1; min-width: 0; padding: 12px 6px; text-align: center;
+  font-size: .78rem; font-weight: 700; color: var(--ghost); cursor: pointer;
+  border-bottom: 3px solid transparent; transition: .2s; white-space: nowrap; user-select: none;
+}
+.nav-tab.on  { color: var(--purple); border-bottom-color: var(--purple) }
+.nav-tab:hover:not(.on) { color: var(--sub) }
+.tab-icon { display: block; font-size: 1rem; margin-bottom: 1px }
+
+/* ─── MAIN ─── */
+main { max-width: 780px; margin: 0 auto; padding: 16px 13px 90px }
+.view { display: none; animation: up .2s ease both }
+.view.on { display: block }
+@keyframes up { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:none} }
+
+/* ─── MONTH NAV ─── */
+#month-nav {
+  display: flex; align-items: center; justify-content: space-between;
+  background: var(--surface); border: 1.5px solid var(--border); border-radius: var(--r);
+  padding: 10px 14px; margin-bottom: 14px;
+}
+.month-label { font-size: 1.1rem; font-weight: 900; text-align: center; flex: 1; color: var(--ink) }
+.month-arrow {
+  background: none; border: 1.5px solid var(--border); color: var(--sub); cursor: pointer;
+  font-size: 1.1rem; padding: 4px 11px; border-radius: var(--r2); transition: .15s; line-height: 1;
+}
+.month-arrow:hover { background: var(--purple-bg); border-color: var(--purple); color: var(--purple) }
+.month-arrow:disabled { opacity: .2; cursor: default }
+
+/* ─── HOY / DÍA BANNER ─── */
+.hoy-banner {
+  background: linear-gradient(135deg, var(--purple-bg), var(--blue-bg));
+  border: 1.5px solid var(--purple-bd); border-radius: var(--r);
+  padding: 14px 16px; margin-bottom: 14px; position: relative; overflow: hidden;
+}
+.hoy-banner::before {
+  content: ''; position: absolute; right: -20px; top: -20px;
+  width: 100px; height: 100px; border-radius: 50%;
+  background: rgba(155,127,232,.1);
+}
+.hoy-title { font-size: .65rem; text-transform: uppercase; letter-spacing: 1.2px; color: var(--purple); font-weight: 800; margin-bottom: 8px }
+.hoy-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px }
+.hoy-item { text-align: center }
+.hoy-lbl { font-size: .6rem; text-transform: uppercase; letter-spacing: .8px; color: var(--sub); font-weight: 700; margin-bottom: 3px }
+.hoy-val { font-family: var(--mono); font-size: 1rem; font-weight: 500; color: var(--red) }
+.hoy-val.zero { color: var(--ghost) }
+.hoy-val.small { font-size: .85rem }
+
+/* ─── KPIs ─── */
+.kpi-strip { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 14px }
+.kpi {
+  background: var(--surface); border: 1.5px solid var(--border); border-radius: var(--r);
+  padding: 13px; position: relative; overflow: hidden;
+}
+.kpi::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: var(--c, var(--blue)) }
+.kpi.k-in  { --c: var(--green) }
+.kpi.k-out { --c: var(--red) }
+.kpi.k-bal { --c: var(--blue) }
+.kpi.k-save{ --c: var(--yellow) }
+.kpi-lbl { font-size: .6rem; text-transform: uppercase; letter-spacing: 1px; color: var(--sub); margin-bottom: 4px; font-weight: 700 }
+.kpi-val { font-family: var(--mono); font-size: .95rem; font-weight: 500; line-height: 1; word-break: break-all; color: var(--ink) }
+.kpi-val.pos  { color: var(--green) }
+.kpi-val.neg  { color: var(--red) }
+.kpi-val.neu  { color: var(--blue) }
+.kpi-val.warn { color: var(--yellow) }
+.kpi-count { font-size: .62rem; color: var(--ghost); margin-top: 3px; font-family: var(--mono) }
+
+/* ─── TARJETA DE CRÉDITO CARD ─── */
+.cc-card {
+  background: var(--surface); border: 1.5px solid var(--purple-bd); border-radius: var(--r);
+  padding: 16px; margin-bottom: 14px; position: relative; overflow: hidden;
+}
+.cc-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: var(--purple) }
+.cc-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px }
+.cc-title { font-size: .75rem; font-weight: 800; text-transform: uppercase; letter-spacing: .8px; color: var(--purple) }
+.cc-config-btn {
+  background: var(--purple-bg); border: 1.5px solid var(--purple-bd); border-radius: var(--r3);
+  padding: 4px 12px; font-size: .7rem; font-weight: 700; color: var(--purple); cursor: pointer; transition: .2s;
+}
+.cc-config-btn:hover { background: var(--purple); color: #fff }
+.cc-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px }
+.cc-item { text-align: center; background: var(--purple-bg); border-radius: var(--r2); padding: 10px 6px }
+.cc-item-lbl { font-size: .6rem; text-transform: uppercase; letter-spacing: .8px; color: var(--sub); font-weight: 700; margin-bottom: 4px }
+.cc-item-val { font-family: var(--mono); font-size: .95rem; font-weight: 500; color: var(--purple) }
+.cc-item-val.alert { color: var(--red) }
+.cc-item-val.warn  { color: var(--yellow) }
+.cc-alert-bar {
+  margin-top: 10px; padding: 8px 12px; border-radius: var(--r2);
+  font-size: .78rem; font-weight: 700; text-align: center;
+}
+.cc-alert-bar.danger { background: var(--red-bg); color: var(--red); border: 1.5px solid var(--red-bd) }
+.cc-alert-bar.warn   { background: var(--yellow-bg); color: var(--yellow); border: 1.5px solid var(--yellow-bd) }
+.cc-alert-bar.ok     { background: var(--green-bg); color: var(--green); border: 1.5px solid var(--green-bd) }
+.cc-alert-bar.neutral{ background: var(--surface2); color: var(--sub); border: 1.5px solid var(--border) }
+
+/* CC config panel */
+.cc-config-panel {
+  background: var(--purple-bg); border: 1.5px dashed var(--purple-bd);
+  border-radius: var(--r2); padding: 14px; margin-top: 10px; display: none;
+}
+.cc-config-panel.open { display: block; animation: up .18s ease both }
+.cc-config-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px }
+.cc-config-row .full { grid-column: 1/-1 }
+.cc-config-lbl { font-size: .63rem; text-transform: uppercase; letter-spacing: .8px; color: var(--sub); font-weight: 700; margin-bottom: 3px }
+.cc-config-panel input, .cc-config-panel select {
+  background: var(--surface); border: 1.5px solid var(--purple-bd); border-radius: var(--r2);
+  padding: 7px 10px; color: var(--ink); font-family: var(--font); font-size: .85rem;
+  outline: none; transition: .2s; width: 100%;
+}
+.cc-config-panel input:focus, .cc-config-panel select:focus { border-color: var(--purple); box-shadow: 0 0 0 3px rgba(155,127,232,.15) }
+.cc-config-note { font-size: .72rem; color: var(--sub); line-height: 1.5; margin-top: 6px }
+
+/* ─── COBRO CARD ─── */
+.cobro-card {
+  background: var(--surface); border: 1.5px solid var(--green-bd); border-radius: var(--r);
+  padding: 14px 16px; margin-bottom: 14px; display: flex; align-items: center; gap: 14px;
+  position: relative; overflow: hidden;
+}
+.cobro-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: var(--green) }
+.cobro-icon { font-size: 2rem; flex-shrink: 0 }
+.cobro-body { flex: 1 }
+.cobro-title { font-size: .63rem; text-transform: uppercase; letter-spacing: 1px; color: var(--sub); font-weight: 700; margin-bottom: 3px }
+.cobro-days  { font-family: var(--mono); font-size: 1.3rem; font-weight: 500; color: var(--green); line-height: 1 }
+.cobro-date  { font-size: .75rem; color: var(--sub); margin-top: 2px }
+.cobro-badge { display: inline-block; padding: 3px 10px; border-radius: var(--r3); font-size: .67rem; font-weight: 800; margin-top: 5px }
+.cobro-badge.ok   { background: var(--green-bg); color: var(--green); border: 1.5px solid var(--green-bd) }
+.cobro-badge.warn { background: var(--yellow-bg); color: var(--yellow); border: 1.5px solid var(--yellow-bd) }
+.cobro-badge.neutral { background: var(--surface2); color: var(--sub); border: 1.5px solid var(--border) }
+.cobro-margen { text-align: right }
+.cobro-margen-lbl { font-size: .6rem; text-transform: uppercase; letter-spacing: .8px; color: var(--sub); font-weight: 700; margin-bottom: 2px }
+.cobro-margen-val { font-family: var(--mono); font-size: 1rem; font-weight: 500 }
+
+/* ─── META AHORRO ─── */
+.meta-card {
+  background: var(--surface); border: 1.5px solid var(--border); border-radius: var(--r);
+  padding: 14px 16px; margin-bottom: 14px; position: relative; overflow: hidden;
+}
+.meta-card::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+  background: linear-gradient(90deg, var(--yellow), var(--green));
+}
+.meta-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px }
+.meta-title  { font-size: .82rem; font-weight: 800; color: var(--ink) }
+.meta-sub    { font-size: .68rem; color: var(--sub); margin-top: 1px }
+.meta-amount { font-family: var(--mono); font-size: 1.1rem; font-weight: 500; text-align: right }
+.meta-bar-bg { background: var(--bg); border-radius: 20px; height: 12px; overflow: hidden; margin-bottom: 5px }
+.meta-bar-fill { height: 100%; border-radius: 20px; transition: width .6s cubic-bezier(.4,0,.2,1); min-width: 4px }
+.meta-status { font-size: .75rem; line-height: 1.5 }
+
+/* ─── CHARTS ─── */
+.chart-grid { display: grid; grid-template-columns: 5fr 4fr; gap: 12px; margin-bottom: 14px }
+.chart-card { background: var(--surface); border: 1.5px solid var(--border); border-radius: var(--r); padding: 14px }
+.chart-head { font-size: .65rem; text-transform: uppercase; letter-spacing: .8px; color: var(--sub); font-weight: 700; margin-bottom: 10px }
+.chart-wrap { position: relative }
+.donut-center { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); text-align: center; pointer-events: none }
+.donut-center-val { font-family: var(--mono); font-size: .9rem; font-weight: 500; color: var(--red); line-height: 1 }
+.donut-center-lbl { font-size: .57rem; color: var(--sub); margin-top: 2px; text-transform: uppercase; letter-spacing: .5px }
+.full-chart { grid-column: 1/-1 }
+.bar-chart-wrap { height: 150px }
+
+/* ─── TX LIST ─── */
+.section-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px }
+.section-title { font-size: .78rem; font-weight: 800; color: var(--sub); text-transform: uppercase; letter-spacing: .5px }
+.tx-list { display: flex; flex-direction: column; gap: 5px }
+.tx-item {
+  display: grid; grid-template-columns: auto 1fr auto auto; align-items: center; gap: 9px;
+  background: var(--surface); border: 1.5px solid var(--border); border-radius: var(--r2);
+  padding: 10px 12px; transition: .15s;
+}
+.tx-item:hover { background: var(--surface2); border-color: var(--border2) }
+.tx-item.recurring { border-left: 3px solid var(--yellow) }
+.tx-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0 }
+.tx-meta { min-width: 0 }
+.tx-desc { font-size: .86rem; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--ink) }
+.tx-sub  { font-size: .67rem; color: var(--sub); margin-top: 2px; display: flex; gap: 5px; align-items: center; flex-wrap: wrap }
+.pill { display: inline-flex; align-items: center; gap: 2px; padding: 1px 7px; border-radius: 20px; font-size: .6rem; font-weight: 700; letter-spacing: .2px }
+.tx-amount { font-family: var(--mono); font-size: .9rem; font-weight: 500; white-space: nowrap }
+.tx-amount.in  { color: var(--green) }
+.tx-amount.out { color: var(--red) }
+.tx-del { background: none; border: none; color: var(--ghost); cursor: pointer; padding: 3px 6px; border-radius: 5px; font-size: .85rem; transition: .15s; flex-shrink: 0 }
+.tx-del:hover { color: var(--red); background: var(--red-bg) }
+.empty-state { text-align: center; padding: 32px 16px; color: var(--sub); background: var(--surface); border: 1.5px dashed var(--border); border-radius: var(--r) }
+.empty-icon { font-size: 2rem; margin-bottom: 7px; opacity: .5 }
+.empty-txt  { font-size: .84rem; line-height: 1.6 }
+
+/* ─── TX FILTER PILLS ─── */
+.tx-filters { display: flex; gap: 6px; margin-bottom: 10px; flex-wrap: wrap }
+.tx-filter {
+  background: var(--surface); border: 1.5px solid var(--border); border-radius: var(--r3);
+  padding: 4px 12px; font-size: .72rem; font-weight: 700; color: var(--sub); cursor: pointer; transition: .2s;
+}
+.tx-filter.on { background: var(--purple-bg); color: var(--purple); border-color: var(--purple-bd) }
+.tx-filter:hover:not(.on) { color: var(--ink) }
+
+/* ─── FORMS ─── */
+.form-toggle {
+  display: flex; align-items: center; justify-content: space-between;
+  background: var(--surface); border: 1.5px solid var(--border); border-radius: var(--r);
+  padding: 13px 15px; cursor: pointer; margin-bottom: 12px; transition: .2s;
+}
+.form-toggle:hover { background: var(--surface2) }
+.form-toggle-title { font-size: .92rem; font-weight: 800 }
+.form-toggle-icon { width: 26px; height: 26px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: .9rem; transition: .3s; font-weight: 900 }
+.form-toggle.open .form-toggle-icon { transform: rotate(45deg) }
+.form-body {
+  background: var(--surface); border: 1.5px solid var(--border); border-top: none;
+  border-radius: 0 0 var(--r) var(--r); padding: 14px; margin-top: -12px; margin-bottom: 12px; display: none;
+}
+.form-body.open { display: block; animation: up .18s ease both }
+.fgrid { display: grid; grid-template-columns: 1fr 1fr; gap: 9px }
+.fgrid .full { grid-column: 1/-1 }
+.fg { display: flex; flex-direction: column; gap: 4px }
+label { font-size: .66rem; text-transform: uppercase; letter-spacing: .8px; color: var(--sub); font-weight: 700 }
+input, select {
+  background: var(--bg); border: 1.5px solid var(--border); border-radius: var(--r2);
+  padding: 8px 11px; color: var(--ink); font-family: var(--font); font-size: .87rem; outline: none; transition: .2s; width: 100%;
+}
+input:focus, select:focus { border-color: var(--purple); box-shadow: 0 0 0 3px rgba(155,127,232,.15); background: var(--surface) }
+select option { background: #fff }
+.recurring-row { display: flex; align-items: flex-start; gap: 9px; background: var(--yellow-bg); border: 1.5px solid var(--yellow-bd); border-radius: var(--r2); padding: 9px 11px; cursor: pointer }
+.recurring-row input[type=checkbox] { width: 16px; height: 16px; accent-color: var(--yellow); flex-shrink: 0; margin-top: 1px; cursor: pointer; background: none; border: none; padding: 0 }
+.recurring-label { font-size: .82rem; color: var(--sub); user-select: none; line-height: 1.5 }
+.recurring-label b { color: var(--yellow) }
+.form-actions { display: flex; gap: 8px; margin-top: 10px }
+.btn { padding: 9px 18px; border-radius: var(--r2); font-family: var(--font); font-size: .86rem; font-weight: 800; cursor: pointer; border: none; transition: .2s }
+.btn-in  { background: var(--green-bg); color: var(--green); border: 1.5px solid var(--green-bd) }
+.btn-in:hover  { background: var(--green); color: #fff }
+.btn-out { background: var(--red-bg); color: var(--red); border: 1.5px solid var(--red-bd) }
+.btn-out:hover { background: var(--red); color: #fff }
+.btn-ghost { background: none; color: var(--sub); border: 1.5px solid var(--border) }
+.btn-ghost:hover { color: var(--ink) }
+.btn-purple { background: var(--purple-bg); color: var(--purple); border: 1.5px solid var(--purple-bd) }
+.btn-purple:hover { background: var(--purple); color: #fff }
+
+/* ─── HISTORY ─── */
+.history-wrap { margin-top: 16px }
+.month-group { margin-bottom: 18px }
+.month-group-title {
+  font-size: .76rem; font-weight: 800; color: var(--sub);
+  text-transform: uppercase; letter-spacing: 1px; padding: 5px 0; border-bottom: 1.5px solid var(--border);
+  margin-bottom: 7px; display: flex; justify-content: space-between;
+}
+.month-group-total { font-family: var(--mono); font-size: .76rem }
+
+/* ─── FIJOS ─── */
+.fijo-card { background: var(--surface); border: 1.5px solid var(--border); border-left: 3px solid var(--yellow); border-radius: var(--r); padding: 13px 14px; margin-bottom: 7px }
+.fijo-card.inactive { opacity: .45; border-left-color: var(--ghost) }
+.fijo-top { display: flex; align-items: center; gap: 9px; margin-bottom: 7px }
+.fijo-desc { font-weight: 800; flex: 1; font-size: .9rem }
+.fijo-amount { font-family: var(--mono); font-size: .9rem; font-weight: 500 }
+.fijo-amount.in  { color: var(--green) }
+.fijo-amount.out { color: var(--red) }
+.fijo-meta { display: flex; gap: 6px; flex-wrap: wrap; align-items: center }
+.fijo-actions { display: flex; gap: 6px; margin-top: 9px }
+.btn-xs { padding: 5px 12px; border-radius: 20px; font-size: .7rem; font-weight: 800; cursor: pointer; border: none; font-family: var(--font); transition: .15s }
+
+/* ─── ANÁLISIS ─── */
+#an-month-nav { display: flex; align-items: center; justify-content: space-between; background: var(--surface); border: 1.5px solid var(--border); border-radius: var(--r); padding: 10px 14px; margin-bottom: 14px }
+.an-kpi-strip { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; margin-bottom: 14px }
+.an-kpi { background: var(--surface); border: 1.5px solid var(--border); border-radius: var(--r); padding: 12px; text-align: center }
+.an-kpi-val { font-family: var(--mono); font-size: .95rem; font-weight: 500; margin-bottom: 2px }
+.an-kpi-lbl { font-size: .6rem; text-transform: uppercase; letter-spacing: .8px; color: var(--sub); font-weight: 700 }
+.an-section { background: var(--surface); border: 1.5px solid var(--border); border-radius: var(--r); padding: 16px; margin-bottom: 14px }
+.an-section-title { font-size: .78rem; font-weight: 800; color: var(--sub); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between }
+.an-section-title span { font-family: var(--mono); font-size: .76rem; color: var(--ink); font-weight: 500; text-transform: none; letter-spacing: 0 }
+.an-chart-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 14px }
+.an-chart-card { background: var(--surface); border: 1.5px solid var(--border); border-radius: var(--r); padding: 14px }
+.method-bar-list { display: flex; flex-direction: column; gap: 9px }
+.method-bar-item { display: flex; flex-direction: column; gap: 4px }
+.method-bar-header { display: flex; justify-content: space-between; align-items: center }
+.method-bar-name { font-size: .78rem; font-weight: 700; display: flex; align-items: center; gap: 6px }
+.method-bar-amount { font-family: var(--mono); font-size: .74rem; color: var(--sub) }
+.method-bar-bg { background: var(--bg); border-radius: 4px; height: 8px; overflow: hidden }
+.method-bar-fill { height: 100%; border-radius: 4px; transition: width .5s ease }
+.superfluous-list { display: flex; flex-direction: column; gap: 8px }
+.superfluous-item { background: var(--surface2); border: 1.5px solid var(--border); border-radius: var(--r2); padding: 12px 14px }
+.superfluous-top { display: flex; align-items: center; gap: 8px; margin-bottom: 6px }
+.superfluous-cat { font-size: .85rem; font-weight: 800; flex: 1 }
+.superfluous-pct { font-family: var(--mono); font-size: .72rem; color: var(--sub) }
+.superfluous-amount { font-family: var(--mono); font-size: .88rem; font-weight: 500; color: var(--red) }
+.superfluous-bar-bg { background: var(--bg); border-radius: 4px; height: 5px; overflow: hidden; margin-bottom: 6px }
+.superfluous-bar-fill { height: 100%; border-radius: 4px; background: var(--red) }
+.superfluous-tip { font-size: .72rem; color: var(--sub); line-height: 1.5 }
+.rec-box { background: var(--green-bg); border: 1.5px solid var(--green-bd); border-radius: var(--r); padding: 14px; margin-bottom: 14px }
+.rec-box-title { font-size: .78rem; font-weight: 800; color: var(--green); margin-bottom: 10px }
+.rec-list { display: flex; flex-direction: column; gap: 7px }
+.rec-item { display: flex; align-items: flex-start; gap: 8px; font-size: .78rem; color: var(--sub); line-height: 1.5 }
+.rec-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green); flex-shrink: 0; margin-top: 5px }
+.rec-item b { color: var(--ink) }
+.rec-goal-bar { margin-top: 12px; padding-top: 12px; border-top: 1.5px solid var(--green-bd) }
+.rec-goal-title { font-size: .68rem; text-transform: uppercase; letter-spacing: .8px; color: var(--sub); font-weight: 700; margin-bottom: 6px }
+.rec-goal-progress { background: var(--bg); border-radius: 8px; height: 12px; overflow: hidden; margin-bottom: 5px }
+.rec-goal-fill { height: 100%; border-radius: 8px; background: linear-gradient(90deg, var(--yellow), var(--green)); transition: width .6s ease }
+.rec-goal-labels { display: flex; justify-content: space-between; font-size: .62rem; color: var(--sub); font-family: var(--mono) }
+.rec-goal-text { font-size: .75rem; color: var(--ink); margin-top: 5px }
+
+/* ─── MODAL / OVERLAY ─── */
+.overlay {
+  position: fixed; inset: 0; background: rgba(45,37,80,.4); z-index: 500;
+  display: flex; align-items: center; justify-content: center; padding: 20px;
+  opacity: 0; pointer-events: none; transition: .2s;
+}
+.overlay.show { opacity: 1; pointer-events: all }
+.modal {
+  background: var(--surface); border: 1.5px solid var(--border); border-radius: var(--r);
+  padding: 24px; max-width: 420px; width: 100%;
+  transform: translateY(20px); transition: .25s cubic-bezier(.34,1.56,.64,1);
+}
+.overlay.show .modal { transform: none }
+.modal-title { font-size: 1.1rem; font-weight: 900; margin-bottom: 6px; color: var(--ink) }
+.modal-sub { font-size: .82rem; color: var(--sub); line-height: 1.6; margin-bottom: 18px }
+.modal-actions { display: flex; flex-direction: column; gap: 8px }
+.btn-modal { padding: 12px 16px; border-radius: var(--r2); font-family: var(--font); font-size: .88rem; font-weight: 800; cursor: pointer; border: none; display: flex; align-items: center; gap: 10px; transition: .2s }
+.btn-modal-from { background: var(--blue-bg); color: var(--blue); border: 1.5px solid var(--blue-bd) }
+.btn-modal-from:hover { background: var(--blue); color: #fff }
+.btn-modal-to   { background: var(--green-bg); color: var(--green); border: 1.5px solid var(--green-bd) }
+.btn-modal-to:hover { background: var(--green); color: #fff }
+.btn-modal-cancel { background: none; color: var(--sub); border: 1.5px solid var(--border) }
+.btn-modal-cancel:hover { color: var(--ink) }
+.sync-status-box { background: var(--bg); border-radius: var(--r2); padding: 12px 14px; font-size: .8rem; color: var(--sub); line-height: 1.7; margin-top: 12px; display: none }
+.sync-status-box.show { display: block }
+
+/* ─── CONFIRM / TOAST ─── */
+#confirm-modal {
+  position: fixed; inset: 0; background: rgba(45,37,80,.4); z-index: 800;
+  display: flex; align-items: flex-end; justify-content: center; padding: 0 0 24px;
+  opacity: 0; pointer-events: none; transition: .2s;
+}
+#confirm-modal.show { opacity: 1; pointer-events: all }
+.confirm-box {
+  background: var(--surface); border: 1.5px solid var(--border); border-radius: var(--r);
+  padding: 20px; max-width: 360px; width: calc(100% - 28px);
+  transform: translateY(30px); transition: .25s cubic-bezier(.34,1.56,.64,1);
+}
+#confirm-modal.show .confirm-box { transform: none }
+.confirm-title { font-size: 1rem; font-weight: 900; margin-bottom: 8px; color: var(--ink) }
+.confirm-msg   { font-size: .84rem; color: var(--sub); line-height: 1.5; margin-bottom: 18px }
+.confirm-btns  { display: flex; gap: 8px }
+.confirm-ok {
+  flex: 1; padding: 11px; border-radius: var(--r2); border: 1.5px solid var(--red-bd);
+  background: var(--red-bg); color: var(--red); font-family: var(--font); font-size: .88rem; font-weight: 800; cursor: pointer; transition: .2s;
+}
+.confirm-ok:hover { background: var(--red); color: #fff }
+.confirm-cancel {
+  flex: 1; padding: 11px; border-radius: var(--r2); border: 1.5px solid var(--border);
+  background: none; color: var(--sub); font-family: var(--font); font-size: .88rem; cursor: pointer; transition: .2s;
+}
+.confirm-cancel:hover { color: var(--ink) }
+#toast {
+  position: fixed; bottom: 18px; right: 18px; background: var(--surface);
+  border: 1.5px solid var(--border); border-radius: var(--r2); padding: 9px 16px;
+  font-size: .8rem; font-weight: 700; box-shadow: 0 8px 32px rgba(45,37,80,.12);
+  z-index: 999; transform: translateY(60px); opacity: 0;
+  transition: .3s cubic-bezier(.34,1.56,.64,1); pointer-events: none; max-width: 270px;
+}
+#toast.show { transform: none; opacity: 1 }
+#toast.ok   { border-color: var(--green-bd); color: var(--green) }
+#toast.err  { border-color: var(--red-bd); color: var(--red) }
+#toast.info { border-color: var(--blue-bd); color: var(--blue) }
+
+/* ─── RESPONSIVE ─── */
+@media(max-width:560px) {
+  .chart-grid { grid-template-columns: 1fr }
+  .an-chart-grid { grid-template-columns: 1fr }
+  .fgrid { grid-template-columns: 1fr }
+  .fgrid .full { grid-column: 1 }
+  .hdr-balance { display: none }
+  .kpi-val { font-size: .82rem }
+  .kpi-strip { grid-template-columns: 1fr 1fr }
+  .hoy-grid { grid-template-columns: 1fr 1fr 1fr }
+  .cc-grid { grid-template-columns: 1fr }
+  .an-kpi-strip { grid-template-columns: 1fr 1fr }
+  .cobro-card { flex-wrap: wrap }
+  .cc-config-row { grid-template-columns: 1fr }
+}
+</style>
+</head>
+<body>
+
+<!-- ══ HEADER ══ -->
+<header id="app-header">
+  <div class="logo">🏡 Nuestras Cuentas</div>
+  <div class="hdr-balance" id="hdr-bal">$0</div>
+  <div class="sync-pill" id="sync-pill" onclick="openSyncModal()">
+    <div class="sync-dot" id="sync-dot"></div>
+    <span id="sync-label">Drive</span>
+  </div>
+  <button class="btn-hdr" onclick="exportXLSX()">↓ Excel</button>
+</header>
+
+<!-- ══ NAV ══ -->
+<nav id="app-nav">
+  <div class="nav-tab on" data-view="dash" onclick="switchTab(this,'dash')"><span class="tab-icon">🏠</span>Inicio</div>
+  <div class="nav-tab" data-view="analisis" onclick="switchTab(this,'analisis')"><span class="tab-icon">📊</span>Análisis</div>
+  <div class="nav-tab" data-view="ingresos" onclick="switchTab(this,'ingresos')"><span class="tab-icon">💚</span>Ingresos</div>
+  <div class="nav-tab" data-view="egresos" onclick="switchTab(this,'egresos')"><span class="tab-icon">❤️</span>Egresos</div>
+  <div class="nav-tab" data-view="fijos" onclick="switchTab(this,'fijos')"><span class="tab-icon">🔁</span>Fijos</div>
+</nav>
+
+<main>
+
+<!-- ══ DASHBOARD ══ -->
+<div class="view on" id="view-dash">
+  <div id="month-nav">
+    <button class="month-arrow" id="prev-month" onclick="changeMonth(-1)">‹</button>
+    <div class="month-label" id="month-label">—</div>
+    <button class="month-arrow" id="next-month" onclick="changeMonth(1)">›</button>
+  </div>
+
+  <!-- HOY / SEMANA / MES panel -->
+  <div class="hoy-banner">
+    <div class="hoy-title">📅 ¿Cuánto gastamos?</div>
+    <div class="hoy-grid">
+      <div class="hoy-item">
+        <div class="hoy-lbl">Hoy</div>
+        <div class="hoy-val" id="gasto-hoy">$0</div>
+      </div>
+      <div class="hoy-item">
+        <div class="hoy-lbl">Esta semana</div>
+        <div class="hoy-val small" id="gasto-semana">$0</div>
+      </div>
+      <div class="hoy-item">
+        <div class="hoy-lbl">Este mes</div>
+        <div class="hoy-val small" id="gasto-mes">$0</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- KPIs -->
+  <div class="kpi-strip">
+    <div class="kpi k-in">
+      <div class="kpi-lbl">Entró 💚</div>
+      <div class="kpi-val pos" id="kpi-in">$0</div>
+      <div class="kpi-count" id="kpi-in-c">0 mov.</div>
+    </div>
+    <div class="kpi k-out">
+      <div class="kpi-lbl">Salió ❤️</div>
+      <div class="kpi-val neg" id="kpi-out">$0</div>
+      <div class="kpi-count" id="kpi-out-c">0 mov.</div>
+    </div>
+    <div class="kpi k-bal">
+      <div class="kpi-lbl">Balance 💙</div>
+      <div class="kpi-val" id="kpi-bal">$0</div>
+      <div class="kpi-count" id="kpi-acum">Acum. $0</div>
+    </div>
+    <div class="kpi k-save">
+      <div class="kpi-lbl">Ahorro 💛</div>
+      <div class="kpi-val" id="kpi-save">$0</div>
+      <div class="kpi-count" id="kpi-save-pct">— de meta</div>
+    </div>
+  </div>
+
+  <!-- TARJETA DE CRÉDITO -->
+  <div class="cc-card">
+    <div class="cc-header">
+      <div class="cc-title">💳 Tarjeta de Crédito</div>
+      <button class="cc-config-btn" onclick="toggleCCConfig()">⚙ Configurar</button>
+    </div>
+    <div class="cc-grid">
+      <div class="cc-item">
+        <div class="cc-item-lbl">Gastado en el ciclo</div>
+        <div class="cc-item-val" id="cc-total">$0</div>
+      </div>
+      <div class="cc-item">
+        <div class="cc-item-lbl">Cierra el día</div>
+        <div class="cc-item-val" id="cc-cierre-dia">—</div>
+      </div>
+      <div class="cc-item">
+        <div class="cc-item-lbl">Días hasta cierre</div>
+        <div class="cc-item-val" id="cc-dias-cierre">—</div>
+      </div>
+    </div>
+    <div class="cc-alert-bar neutral" id="cc-alert">Sin movimientos con tarjeta este ciclo</div>
+
+    <!-- Config panel -->
+    <div class="cc-config-panel" id="cc-config-panel">
+      <div class="cc-config-row">
+        <div>
+          <div class="cc-config-lbl">Día de cierre</div>
+          <input type="number" id="cc-dia-cierre-input" min="1" max="31" placeholder="Ej: 23" value="">
+        </div>
+        <div>
+          <div class="cc-config-lbl">Día de pago (vencimiento)</div>
+          <input type="number" id="cc-dia-pago-input" min="1" max="31" placeholder="Ej: 13" value="">
+        </div>
+      </div>
+      <div class="cc-config-row">
+        <div class="full">
+          <div class="cc-config-lbl">Nombre de la tarjeta (opcional)</div>
+          <input type="text" id="cc-nombre-input" placeholder="Ej: Visa Galicia, Naranja X...">
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:8px">
+        <button class="btn btn-purple" onclick="saveCCConfig()" style="flex:1">✓ Guardar</button>
+        <button class="btn btn-ghost" onclick="toggleCCConfig()">Cancelar</button>
+      </div>
+      <div class="cc-config-note">💡 El ciclo va desde el día de cierre del mes anterior hasta el día de cierre de este mes. Lo que gastás en el ciclo es lo que pagás en la fecha de vencimiento.</div>
+    </div>
+  </div>
+
+  <!-- PRÓXIMO COBRO -->
+  <div class="cobro-card">
+    <div class="cobro-icon">💼</div>
+    <div class="cobro-body">
+      <div class="cobro-title">Próximo cobro (día 15)</div>
+      <div class="cobro-days" id="sc-cobro-days">— días</div>
+      <div class="cobro-date" id="sc-cobro-date">15 de —</div>
+      <div class="cobro-badge neutral" id="sc-cobro-badge">Trabajás a mes vencido</div>
+    </div>
+    <div class="cobro-margen">
+      <div class="cobro-margen-lbl">Margen disponible</div>
+      <div class="cobro-margen-val" id="cobro-margen">$0</div>
+      <div style="font-size:.62rem;color:var(--sub);margin-top:2px">antes del próximo cobro</div>
+    </div>
+  </div>
+
+  <!-- META AHORRO -->
+  <div class="meta-card">
+    <div class="meta-header">
+      <div>
+        <div class="meta-title">🎯 Meta de ahorro mensual</div>
+        <div class="meta-sub">Objetivo: entre $300.000 y $400.000</div>
+      </div>
+      <div>
+        <div class="meta-amount" id="meta-ahorro-val">$0</div>
+        <div style="font-size:.6rem;text-transform:uppercase;letter-spacing:.8px;color:var(--sub);text-align:right;margin-top:2px">ahorrado</div>
+      </div>
+    </div>
+    <div class="meta-bar-bg"><div class="meta-bar-fill" id="meta-bar" style="width:0%;background:var(--ghost)"></div></div>
+    <div class="meta-status" id="meta-status">Sin datos registrados este mes.</div>
+  </div>
+
+  <!-- CHARTS -->
+  <div class="chart-grid">
+    <div class="chart-card">
+      <div class="chart-head">Egresos por categoría</div>
+      <div class="chart-wrap" style="height:185px">
+        <canvas id="c-donut"></canvas>
+        <div class="donut-center"><div class="donut-center-val" id="donut-total">—</div><div class="donut-center-lbl">gastado</div></div>
+      </div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-head">Ingresos por categoría</div>
+      <div class="chart-wrap" style="height:185px">
+        <canvas id="c-donut-in"></canvas>
+        <div class="donut-center"><div class="donut-center-val" id="donut-in-total" style="color:var(--green)">—</div><div class="donut-center-lbl">recibido</div></div>
+      </div>
+    </div>
+    <div class="chart-card full-chart">
+      <div class="chart-head">Comparativo últimos 6 meses</div>
+      <div class="bar-chart-wrap"><canvas id="c-bar"></canvas></div>
+    </div>
+  </div>
+
+  <!-- LISTA CON FILTROS -->
+  <div class="section-head">
+    <div class="section-title" id="tx-month-title">Movimientos</div>
+  </div>
+  <div class="tx-filters">
+    <div class="tx-filter on" id="f-todos"    onclick="setTxFilter('todos',this)">Todos</div>
+    <div class="tx-filter"    id="f-hoy"      onclick="setTxFilter('hoy',this)">📅 Hoy</div>
+    <div class="tx-filter"    id="f-semana"   onclick="setTxFilter('semana',this)">📆 Semana</div>
+    <div class="tx-filter"    id="f-credito"  onclick="setTxFilter('credito',this)">💳 Crédito</div>
+    <div class="tx-filter"    id="f-superfluos" onclick="setTxFilter('superfluos',this)">⚠ Superfluos</div>
+  </div>
+  <div class="tx-list" id="dash-tx-list">
+    <div class="empty-state"><div class="empty-icon">📭</div><div class="empty-txt">Sin movimientos este mes.</div></div>
+  </div>
+</div>
+
+<!-- ══ ANÁLISIS ══ -->
+<div class="view" id="view-analisis">
+  <div id="an-month-nav">
+    <button class="month-arrow" id="an-prev-month" onclick="changeMonthAn(-1)">‹</button>
+    <div class="month-label" id="an-month-label">—</div>
+    <button class="month-arrow" id="an-next-month" onclick="changeMonthAn(1)">›</button>
+  </div>
+  <div class="an-kpi-strip">
+    <div class="an-kpi">
+      <div class="an-kpi-val" style="color:var(--red)" id="an-kpi-dia">$0</div>
+      <div class="an-kpi-lbl">Gasto promedio por día</div>
+    </div>
+    <div class="an-kpi">
+      <div class="an-kpi-val" style="color:var(--yellow)" id="an-kpi-semana">$0</div>
+      <div class="an-kpi-lbl">Gasto promedio por semana</div>
+    </div>
+    <div class="an-kpi">
+      <div class="an-kpi-val" style="color:var(--purple)" id="an-kpi-mayor">—</div>
+      <div class="an-kpi-lbl">Mayor categoría de gasto</div>
+    </div>
+  </div>
+  <div class="rec-box" id="rec-box">
+    <div class="rec-box-title">💡 Consejos para llegar a la meta de ahorro</div>
+    <div class="rec-list" id="rec-list"></div>
+    <div class="rec-goal-bar">
+      <div class="rec-goal-title">Progreso hacia meta de ahorro mínima ($300.000)</div>
+      <div class="rec-goal-progress"><div class="rec-goal-fill" id="rec-goal-fill" style="width:0%"></div></div>
+      <div class="rec-goal-labels"><span>$0</span><span>$150K</span><span>$300K</span></div>
+      <div class="rec-goal-text" id="rec-goal-text"></div>
+    </div>
+  </div>
+  <div class="an-chart-grid">
+    <div class="an-chart-card">
+      <div class="chart-head">Gasto por semana</div>
+      <div style="height:160px"><canvas id="c-semana"></canvas></div>
+    </div>
+    <div class="an-chart-card">
+      <div class="chart-head">Esenciales vs Superfluos</div>
+      <div class="chart-wrap" style="height:160px">
+        <canvas id="c-esencial"></canvas>
+        <div class="donut-center"><div class="donut-center-val" id="superfluo-total" style="color:var(--yellow)">—</div><div class="donut-center-lbl">superfluos</div></div>
+      </div>
+    </div>
+  </div>
+  <div class="an-section">
+    <div class="an-section-title">Gasto diario del mes <span id="an-daily-total"></span></div>
+    <div style="height:130px"><canvas id="c-diario"></canvas></div>
+  </div>
+  <div class="an-section">
+    <div class="an-section-title">¿Con qué pagamos? <span id="an-metodo-total"></span></div>
+    <div class="method-bar-list" id="method-bar-list"></div>
+  </div>
+  <div class="an-section">
+    <div class="an-section-title">Gastos que podemos reducir <span id="an-superfluo-pct"></span></div>
+    <div class="superfluous-list" id="superfluous-list"></div>
+  </div>
+</div>
+
+<!-- ══ INGRESOS ══ -->
+<div class="view" id="view-ingresos">
+  <div class="form-toggle" id="toggle-in" onclick="toggleForm('in')">
+    <div class="form-toggle-title" style="color:var(--green)">💚 Registrar ingreso</div>
+    <div class="form-toggle-icon" style="background:var(--green-bg);color:var(--green)">+</div>
+  </div>
+  <div class="form-body" id="form-in">
+    <div class="fgrid">
+      <div class="fg"><label>📅 Fecha</label><input type="date" id="in-fecha"></div>
+      <div class="fg"><label>📂 Categoría</label>
+        <select id="in-cat">
+          <option value="Sueldo">💼 Sueldo</option>
+          <option value="Extra/Bono">💰 Extra / Bono</option>
+          <option value="Freelance">💻 Freelance</option>
+          <option value="Inversiones">📈 Inversiones</option>
+          <option value="Cobros">🤝 Cobros / Deudas</option>
+          <option value="Otros ingresos">📥 Otros</option>
+        </select>
+      </div>
+      <div class="fg full"><label>✏️ Descripción</label><input type="text" id="in-desc" placeholder="Ej: Sueldo abril, cobro a Juan..."></div>
+      <div class="fg"><label>💲 Monto ($)</label><input type="number" id="in-monto" placeholder="0" min="0" step="0.01"></div>
+      <div class="fg"><label>🏦 Cómo llegó</label>
+        <select id="in-medio">
+          <option value="Transferencia">Transferencia</option>
+          <option value="Efectivo">Efectivo</option>
+          <option value="Débito">Débito</option>
+          <option value="Cheque">Cheque</option>
+        </select>
+      </div>
+      <div class="fg full">
+        <label for="in-fix">¿Se repite?</label>
+        <label class="recurring-row" for="in-fix">
+          <input type="checkbox" id="in-fix">
+          <span class="recurring-label">¿Es un ingreso <b>mensual fijo</b>? Se va a agregar solo cada mes.</span>
+        </label>
+      </div>
+    </div>
+    <div class="form-actions">
+      <button class="btn btn-in" onclick="addMovimiento('in')">💚 Guardar ingreso</button>
+      <button class="btn btn-ghost" onclick="toggleForm('in')">Cancelar</button>
+    </div>
+  </div>
+  <div class="history-wrap">
+    <div class="section-head">
+      <div class="section-title">Historial</div>
+      <div class="kpi-val pos" id="in-total-all" style="font-size:.82rem;font-family:var(--mono)">$0</div>
+    </div>
+    <div id="in-history"></div>
+  </div>
+</div>
+
+<!-- ══ EGRESOS ══ -->
+<div class="view" id="view-egresos">
+  <div class="form-toggle" id="toggle-out" onclick="toggleForm('out')">
+    <div class="form-toggle-title" style="color:var(--red)">❤️ Registrar gasto</div>
+    <div class="form-toggle-icon" style="background:var(--red-bg);color:var(--red)">+</div>
+  </div>
+  <div class="form-body" id="form-out">
+    <div class="fgrid">
+      <div class="fg"><label>📅 Fecha</label><input type="date" id="out-fecha"></div>
+      <div class="fg"><label>📂 Categoría</label>
+        <select id="out-cat">
+          <option value="Hogar">🏠 Hogar / Casa</option>
+          <option value="Alimentación">🛒 Alimentación</option>
+          <option value="Transporte">🚗 Transporte</option>
+          <option value="Salud">❤️ Salud</option>
+          <option value="Educación">📚 Educación</option>
+          <option value="Entretenimiento">🎮 Entretenimiento</option>
+          <option value="Vestimenta">👕 Vestimenta</option>
+          <option value="Servicios">💡 Servicios</option>
+          <option value="Seguros">🛡️ Seguros</option>
+          <option value="Tarjeta/Cuotas">💳 Tarjeta / Cuotas</option>
+          <option value="Inversión">📈 Inversión</option>
+          <option value="Otros">📦 Otros</option>
+        </select>
+      </div>
+      <div class="fg full"><label>✏️ Descripción</label><input type="text" id="out-desc" placeholder="Ej: Supermercado, nafta, MAPFRE..."></div>
+      <div class="fg"><label>💲 Monto ($)</label><input type="number" id="out-monto" placeholder="0" min="0" step="0.01"></div>
+      <div class="fg"><label>💳 Cómo pagaste</label>
+        <select id="out-medio">
+          <option value="Efectivo">💵 Efectivo</option>
+          <option value="Débito">💳 Débito</option>
+          <option value="Crédito">💳 Tarjeta Crédito</option>
+          <option value="Transferencia">🏦 Transferencia</option>
+        </select>
+      </div>
+      <div class="fg full">
+        <label for="out-fix">¿Se repite?</label>
+        <label class="recurring-row" for="out-fix">
+          <input type="checkbox" id="out-fix">
+          <span class="recurring-label">¿Es un gasto <b>mensual fijo</b>? Se va a agregar solo cada mes.</span>
+        </label>
+      </div>
+    </div>
+    <div class="form-actions">
+      <button class="btn btn-out" onclick="addMovimiento('out')">❤️ Guardar gasto</button>
+      <button class="btn btn-ghost" onclick="toggleForm('out')">Cancelar</button>
+    </div>
+  </div>
+  <div class="history-wrap">
+    <div class="section-head">
+      <div class="section-title">Historial</div>
+      <div class="kpi-val neg" id="out-total-all" style="font-size:.82rem;font-family:var(--mono)">$0</div>
+    </div>
+    <div id="out-history"></div>
+  </div>
+</div>
+
+<!-- ══ FIJOS ══ -->
+<div class="view" id="view-fijos">
+  <div style="margin-bottom:14px">
+    <div style="font-size:1rem;font-weight:900;margin-bottom:5px;color:var(--ink)">🔁 Cuentas Fijas Mensuales</div>
+    <div style="font-size:.8rem;color:var(--sub);line-height:1.6">
+      Se agregan <b style="color:var(--yellow)">automáticamente</b> cada mes. Podés pausarlas o eliminarlas cuando quieras.
+    </div>
+  </div>
+  <div id="fijos-in-list" style="margin-bottom:18px"></div>
+  <div id="fijos-out-list"></div>
+</div>
+
+</main>
+
+<!-- ══ CONFIRM MODAL ══ -->
+<div id="confirm-modal">
+  <div class="confirm-box">
+    <div class="confirm-title" id="confirm-title"></div>
+    <div class="confirm-msg" id="confirm-msg"></div>
+    <div class="confirm-btns">
+      <button class="confirm-ok" id="confirm-ok">Eliminar</button>
+      <button class="confirm-cancel" onclick="closeConfirm()">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ SYNC MODAL ══ -->
+<div class="overlay" id="sync-overlay">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-title">☁ Sincronizar con Google Drive</div>
+    <div class="modal-sub">
+      Conectado a tu hoja <b style="color:var(--blue)">Finanzas David</b>.<br>
+      Elegí qué querés hacer:
+    </div>
+    <div class="modal-actions">
+      <button class="btn-modal btn-modal-from" onclick="syncFromDrive()">
+        <span style="font-size:1.1rem">↓</span>
+        <div>
+          <div style="font-size:.88rem">Traer datos desde Drive</div>
+          <div style="font-size:.72rem;opacity:.7;font-weight:500">Reemplaza los datos locales con los del sheet</div>
+        </div>
+      </button>
+      <button class="btn-modal btn-modal-to" onclick="syncToDrive()">
+        <span style="font-size:1.1rem">↑</span>
+        <div>
+          <div style="font-size:.88rem">Guardar datos en Drive</div>
+          <div style="font-size:.72rem;opacity:.7;font-weight:500">Sube los datos locales al sheet</div>
+        </div>
+      </button>
+      <button class="btn-modal btn-modal-cancel" onclick="closeSyncModal()">Cancelar</button>
+    </div>
+    <div class="sync-status-box" id="sync-status-box"></div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+// ══════════════════════════════════════════
+//  CONFIG
+// ══════════════════════════════════════════
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwSo-jhfBn89i-0xzpeutObDlsuAQenQbx2NOjDElunOFF5QRBsl3MWTeE7wmXU4m5H/exec';
+
+// ══════════════════════════════════════════
+//  DATA LAYER
+// ══════════════════════════════════════════
+const K={tx:'lc_tx',rec:'lc_rec',syncTs:'lc_sync_ts',cc:'lc_cc_config'};
+function load(k){try{return JSON.parse(localStorage.getItem(k)||'[]')}catch{return[]}}
+function loadObj(k,def={}){try{return JSON.parse(localStorage.getItem(k)||JSON.stringify(def))}catch{return def}}
+function save(k,d){localStorage.setItem(k,JSON.stringify(d))}
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,5);
+
+function getTx(){return load(K.tx)}
+function getRec(){return load(K.rec)}
+function saveTx(d){save(K.tx,d)}
+function saveRec(d){save(K.rec,d)}
+function getCCConfig(){return loadObj(K.cc,{cierre:23,pago:13,nombre:''})}
+function saveCCConfigData(d){save(K.cc,d)}
+
+// month utils
+function todayYm(){const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')}
+function nextYm(ym){const[y,m]=ym.split('-').map(Number);return m===12?`${y+1}-01`:`${y}-${String(m+1).padStart(2,'0')}`}
+function prevYm(ym){const[y,m]=ym.split('-').map(Number);return m===1?`${y-1}-12`:`${y}-${String(m-1).padStart(2,'0')}`}
+function ymLabel(ym){const[y,m]=ym.split('-').map(Number);return['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'][m-1]+' '+y}
+function ymShort(ym){const[y,m]=ym.split('-').map(Number);return['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'][m-1]+"'"+String(y).slice(2)}
+function dateToYm(s){return s?s.slice(0,7):todayYm()}
+
+function activeMonths(){
+  const set=new Set();const now=todayYm();
+  getTx().forEach(t=>set.add(t.ym));
+  getRec().filter(r=>r.active).forEach(r=>{let ym=r.fromYm;while(ym<=now){set.add(ym);ym=nextYm(ym)}});
+  if(!set.size)set.add(now);
+  return[...set].sort();
+}
+function getMonthTx(ym){
+  const manual=getTx().filter(t=>t.ym===ym);
+  const recI=getRec().filter(r=>r.active&&r.fromYm<=ym).map(r=>({...r,isRec:true,ym}));
+  return[...recI,...manual];
+}
+function getMonthTotals(ym){
+  const txs=getMonthTx(ym);
+  const inc=txs.filter(t=>t.type==='in').reduce((s,t)=>s+Number(t.amount),0);
+  const out=txs.filter(t=>t.type==='out').reduce((s,t)=>s+Number(t.amount),0);
+  return{inc,out,bal:inc-out,txs};
+}
+function getCumBalance(upTo){
+  return activeMonths().filter(m=>m<=upTo).reduce((s,m)=>{const t=getMonthTotals(m);return s+t.inc-t.out},0);
+}
+
+let currentYm=todayYm();
+let anYm=todayYm();
+let txFilter='todos';
+let charts={};
+
+const CAT_C={
+  'Hogar':'#6B94E8','Alimentación':'#E07070','Transporte':'#D4A843','Salud':'#5EB99F',
+  'Educación':'#9B7FE8','Entretenimiento':'#E07AA8','Vestimenta':'#D4A843','Servicios':'#5BA8C4',
+  'Seguros':'#7DB87D','Tarjeta/Cuotas':'#C4956A','Inversión':'#5EB99F','Otros':'#9B7FE8',
+  'Sueldo':'#5EB99F','Extra/Bono':'#6B94E8','Freelance':'#9B7FE8','Inversiones':'#5EB99F',
+  'Cobros':'#D4A843','Otros ingresos':'#9B7FE8'
+};
+const cc_color=c=>CAT_C[c]||'#B8AFCE';
+
+const SUPERFLUOUS=['Entretenimiento','Vestimenta','Tarjeta/Cuotas','Otros'];
+const SUPERFLUOUS_TIPS={
+  'Entretenimiento':'Salidas, streaming, suscripciones. Revisá cuáles usás realmente.',
+  'Vestimenta':'Ropa y calzado. Podés acotar las compras impulsivas.',
+  'Tarjeta/Cuotas':'Cuotas activas. Evitá nuevas compras en cuotas hasta cancelar las actuales.',
+  'Otros':'Gastos sin categoría. Clasificarlos te ayuda a identificar dónde recortar.'
+};
+
+function fmt(n){
+  const a=Math.abs(Number(n));
+  if(a>=1e6)return'$'+(a/1e6).toFixed(2)+'M';
+  if(a>=1000)return'$'+Math.round(a).toLocaleString('es-AR');
+  return'$'+Number(a).toFixed(a%1===0?0:2)
+}
+function fmtK(n){
+  const a=Math.abs(Number(n));
+  if(a>=1e6)return'$'+(a/1e6).toFixed(1)+'M';
+  if(a>=1000)return'$'+(a/1000).toFixed(0)+'K';
+  return fmt(n);
+}
+
+// ══════════════════════════════════════════
+//  CC CONFIG UI
+// ══════════════════════════════════════════
+function toggleCCConfig(){
+  const panel=document.getElementById('cc-config-panel');
+  const open=panel.classList.toggle('open');
+  if(open){
+    const cfg=getCCConfig();
+    document.getElementById('cc-dia-cierre-input').value=cfg.cierre||23;
+    document.getElementById('cc-dia-pago-input').value=cfg.pago||13;
+    document.getElementById('cc-nombre-input').value=cfg.nombre||'';
+  }
+}
+function saveCCConfig(){
+  const cierre=parseInt(document.getElementById('cc-dia-cierre-input').value)||23;
+  const pago=parseInt(document.getElementById('cc-dia-pago-input').value)||13;
+  const nombre=document.getElementById('cc-nombre-input').value.trim();
+  saveCCConfigData({cierre,pago,nombre});
+  document.getElementById('cc-config-panel').classList.remove('open');
+  renderCCCard();
+  toast('✓ Configuración de tarjeta guardada','ok');
+}
+
+// ══════════════════════════════════════════
+//  NAVIGATION
+// ══════════════════════════════════════════
+function switchTab(el,view){
+  document.querySelectorAll('.nav-tab').forEach(x=>x.classList.remove('on'));
+  document.querySelectorAll('.view').forEach(x=>x.classList.remove('on'));
+  el.classList.add('on');
+  const target=document.getElementById('view-'+view);
+  if(target)target.classList.add('on');
+  if(view==='dash'){try{renderDash();}catch(e){console.error('dash',e)}}
+  if(view==='analisis'){try{renderAnalisis();}catch(e){console.error('an',e)}}
+  if(view==='ingresos'){try{renderHistory('in');}catch(e){console.error('ing',e)}}
+  if(view==='egresos'){try{renderHistory('out');}catch(e){console.error('out',e)}}
+  if(view==='fijos'){try{renderFijos();}catch(e){console.error('fij',e)}}
+}
+function changeMonth(dir){
+  const ms=activeMonths();const idx=ms.indexOf(currentYm);
+  const ni=idx+dir;if(ni>=0&&ni<ms.length){currentYm=ms[ni];renderDash();}
+}
+function changeMonthAn(dir){
+  const ms=activeMonths();const idx=ms.indexOf(anYm);
+  const ni=idx+dir;if(ni>=0&&ni<ms.length){anYm=ms[ni];renderAnalisis();}
+}
+
+// ══════════════════════════════════════════
+//  TX FILTER
+// ══════════════════════════════════════════
+function setTxFilter(f,el){
+  txFilter=f;
+  document.querySelectorAll('.tx-filter').forEach(x=>x.classList.remove('on'));
+  el.classList.add('on');
+  renderTxList();
+}
+function getFilteredTx(txs){
+  if(txFilter==='todos')return txs;
+  const now=new Date();
+  const todayStr=now.toISOString().slice(0,10);
+  if(txFilter==='hoy') return txs.filter(t=>t.date===todayStr);
+  if(txFilter==='semana'){
+    const weekAgo=new Date(now-7*86400000).toISOString().slice(0,10);
+    return txs.filter(t=>t.date&&t.date>=weekAgo);
+  }
+  if(txFilter==='credito') return txs.filter(t=>t.method==='Crédito');
+  if(txFilter==='superfluos') return txs.filter(t=>t.type==='out'&&SUPERFLUOUS.includes(t.cat));
+  return txs;
+}
+
+// ══════════════════════════════════════════
+//  SYNC
+// ══════════════════════════════════════════
+function openSyncModal(){
+  document.getElementById('sync-status-box').className='sync-status-box';
+  document.getElementById('sync-overlay').classList.add('show');
+}
+function closeSyncModal(){document.getElementById('sync-overlay').classList.remove('show')}
+document.getElementById('sync-overlay').addEventListener('click',function(e){if(e.target===this)closeSyncModal()});
+function setSyncState(state,label){
+  document.getElementById('sync-dot').className='sync-dot '+state;
+  document.getElementById('sync-label').textContent=label||'Drive';
+}
+function showSyncStatus(html){
+  const el=document.getElementById('sync-status-box');
+  el.innerHTML=html;el.classList.add('show');
+}
+async function syncFromDrive(){
+  setSyncState('syncing','Cargando...');
+  showSyncStatus('⏳ Cargando datos desde Google Drive...');
+  try{
+    const res=await fetch(SCRIPT_URL+'?action=get',{method:'GET'});
+    if(!res.ok)throw new Error('HTTP '+res.status);
+    const data=await res.json();
+    if(data.error)throw new Error(data.error);
+    if(data.transactions)saveTx(data.transactions);
+    if(data.recurring)saveRec(data.recurring);
+    const ts=new Date().toLocaleString('es-AR');
+    localStorage.setItem(K.syncTs,ts);
+    setSyncState('ok','Sincronizado');
+    showSyncStatus(`✅ <b style="color:var(--green)">Datos importados</b><br>📄 ${(data.transactions||[]).length} movimientos<br>🔁 ${(data.recurring||[]).length} cuentas fijas<br>🕐 ${ts}`);
+    renderDash();renderHistory('in');renderHistory('out');renderFijos();updateHeaderBalance();
+    toast('☁ Datos importados desde Drive','ok');
+  }catch(e){
+    setSyncState('err','Error');
+    showSyncStatus(`❌ <b style="color:var(--red)">Error al conectar con Drive</b><br><span style="color:var(--sub);font-size:.75rem">${e.message}</span>`);
+    toast('Error al conectar con Drive','err');
+  }
+}
+async function syncToDrive(){
+  setSyncState('syncing','Guardando...');
+  showSyncStatus('⏳ Subiendo datos a Google Drive...');
+  try{
+    const payload={transactions:getTx(),recurring:getRec()};
+    const res=await fetch(SCRIPT_URL,{method:'POST',body:JSON.stringify({action:'set',...payload})});
+    if(!res.ok)throw new Error('HTTP '+res.status);
+    const data=await res.json();
+    if(data.error)throw new Error(data.error);
+    const ts=new Date().toLocaleString('es-AR');
+    localStorage.setItem(K.syncTs,ts);
+    setSyncState('ok','Sincronizado');
+    showSyncStatus(`✅ <b style="color:var(--green)">Datos guardados en Drive</b><br>📄 ${getTx().length} movimientos<br>🕐 ${ts}`);
+    toast('☁ Datos guardados en Drive','ok');
+  }catch(e){
+    setSyncState('err','Error');
+    showSyncStatus(`❌ <b style="color:var(--red)">Error al guardar en Drive</b><br><span style="color:var(--sub);font-size:.75rem">${e.message}</span>`);
+    toast('Error al guardar en Drive','err');
+  }
+}
+
+// ══════════════════════════════════════════
+//  FORMS
+// ══════════════════════════════════════════
+function toggleForm(t){
+  const tog=document.getElementById('toggle-'+t);
+  const bod=document.getElementById('form-'+t);
+  const open=bod.classList.toggle('open');
+  tog.classList.toggle('open',open);
+  if(open)document.getElementById(t+'-fecha').value=new Date().toISOString().slice(0,10);
+}
+function addMovimiento(type){
+  const fecha =document.getElementById(type+'-fecha').value;
+  const cat   =document.getElementById(type+'-cat').value;
+  const desc  =document.getElementById(type+'-desc').value.trim();
+  const amount=parseFloat(document.getElementById(type+'-monto').value);
+  const method=document.getElementById(type+'-medio').value;
+  const isfix =document.getElementById(type+'-fix').checked;
+  if(!desc||!amount||amount<=0){toast('Completá descripción y monto','err');return}
+  const ym=dateToYm(fecha);
+  if(isfix){
+    const rec=getRec();rec.push({id:uid(),type,desc,cat,amount,method,fromYm:ym,active:true});
+    saveRec(rec);toast('🔁 Cuenta fija registrada desde '+ymLabel(ym),'ok');
+  }else{
+    const tx=getTx();tx.push({id:uid(),ym,date:fecha,type,desc,cat,amount,method});
+    saveTx(tx);toast((type==='in'?'💚':'❤️')+' Registrado','ok');
+  }
+  document.getElementById(type+'-desc').value='';
+  document.getElementById(type+'-monto').value='';
+  document.getElementById(type+'-fix').checked=false;
+  toggleForm(type);
+  if(!activeMonths().includes(currentYm))currentYm=ym;
+  if(document.getElementById('view-dash').classList.contains('on'))renderDash();
+  if(type==='in')renderHistory('in');
+  if(type==='out')renderHistory('out');
+  updateHeaderBalance();
+}
+
+// ══════════════════════════════════════════
+//  DELETE
+// ══════════════════════════════════════════
+function deleteTx(id){
+  showConfirm('Eliminar movimiento','¿Eliminás este movimiento?',function(){
+    saveTx(getTx().filter(t=>t.id!==id));
+    renderDash();renderHistory('in');renderHistory('out');updateHeaderBalance();toast('Movimiento eliminado','err');
+  });
+}
+function deleteRec(id){
+  if(!confirm('¿Eliminar esta cuenta fija?\nDesaparecerá de todos los meses.'))return;
+  saveRec(getRec().filter(r=>r.id!==id));
+  renderFijos();renderDash();renderHistory('in');renderHistory('out');updateHeaderBalance();toast('Cuenta fija eliminada','err');
+}
+function toggleRec(id){
+  const rec=getRec();const r=rec.find(r=>r.id===id);if(!r)return;
+  r.active=!r.active;saveRec(rec);
+  renderFijos();renderDash();updateHeaderBalance();
+  toast(r.active?'🔁 Cuenta fija activada':'Cuenta fija pausada','ok');
+}
+function deleteFijoFromRow(id){
+  const rec=getRec();
+  const item=rec.find(r=>r.id===id);
+  const name=item?item.desc:'este fijo';
+  showConfirm('Eliminar fijo mensual','"'+name+'" aparece todos los meses.<br>¿Eliminarlo de todos los meses futuros?',function(){
+    saveRec(getRec().filter(r=>r.id!==id));
+    renderFijos();renderDash();renderHistory('in');renderHistory('out');updateHeaderBalance();
+    toast('Fijo eliminado','err');
+  });
+}
+
+// ══════════════════════════════════════════
+//  HOY / SEMANA / MES gastos
+// ══════════════════════════════════════════
+function renderGastoPeriodo(){
+  const now=new Date();
+  const todayStr=now.toISOString().slice(0,10);
+  const weekAgo=new Date(now-7*86400000).toISOString().slice(0,10);
+  const allTx=getTx();
+
+  const gastoHoy=allTx.filter(t=>t.type==='out'&&t.date===todayStr).reduce((s,t)=>s+Number(t.amount),0);
+  const gastoSemana=allTx.filter(t=>t.type==='out'&&t.date&&t.date>=weekAgo&&t.date<=todayStr).reduce((s,t)=>s+Number(t.amount),0);
+  const gastoMes=getMonthTotals(currentYm).out;
+
+  const elHoy=document.getElementById('gasto-hoy');
+  const elSem=document.getElementById('gasto-semana');
+  const elMes=document.getElementById('gasto-mes');
+  elHoy.textContent=fmt(gastoHoy);
+  elHoy.className='hoy-val'+(gastoHoy===0?' zero':'');
+  elSem.textContent=fmt(gastoSemana);
+  elSem.className='hoy-val small'+(gastoSemana===0?' zero':'');
+  elMes.textContent=fmt(gastoMes);
+  elMes.className='hoy-val small'+(gastoMes===0?' zero':'');
+}
+
+// ══════════════════════════════════════════
+//  CC CARD
+// ══════════════════════════════════════════
+function renderCCCard(){
+  const cfg=getCCConfig();
+  const cierreDia=cfg.cierre||23;
+  const now=new Date();
+  const day=now.getDate();
+  const y=now.getFullYear();
+  const m=now.getMonth();
+  const MES=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+
+  let cycleStart,cycleEnd;
+  if(day<=cierreDia){
+    cycleStart=new Date(y,m-1,cierreDia+1);
+    cycleEnd=new Date(y,m,cierreDia);
+  }else{
+    cycleStart=new Date(y,m,cierreDia+1);
+    cycleEnd=new Date(y,m+1,cierreDia);
+  }
+  const daysLeft=Math.max(0,Math.ceil((cycleEnd-now)/86400000));
+  const allTx=getTx();
+  const cycleTx=allTx.filter(t=>{
+    if(t.method!=='Crédito'||t.type!=='out'||!t.date)return false;
+    const d=new Date(t.date+'T00:00:00');
+    return d>=cycleStart&&d<=cycleEnd;
+  });
+  const total=cycleTx.reduce((s,t)=>s+Number(t.amount),0);
+
+  // Update title with card name
+  const ccTitle=document.querySelector('.cc-title');
+  ccTitle.textContent='💳 '+(cfg.nombre?cfg.nombre:'Tarjeta de Crédito');
+
+  document.getElementById('cc-total').textContent=fmt(total);
+  document.getElementById('cc-total').className='cc-item-val'+(daysLeft<=5?' alert':daysLeft<=10?' warn':'');
+  document.getElementById('cc-cierre-dia').textContent='día '+cierreDia+' de '+MES[cycleEnd.getMonth()];
+  document.getElementById('cc-dias-cierre').textContent=daysLeft+(daysLeft===1?' día':' días');
+  document.getElementById('cc-dias-cierre').className='cc-item-val'+(daysLeft<=5?' alert':daysLeft<=10?' warn':'');
+
+  const alertEl=document.getElementById('cc-alert');
+  if(total===0){
+    alertEl.textContent='Sin gastos con tarjeta en este ciclo';
+    alertEl.className='cc-alert-bar neutral';
+  }else if(daysLeft<=3){
+    alertEl.textContent='⚠ ¡El ciclo cierra en '+daysLeft+(daysLeft===1?' día':' días')+'! Vas a pagar '+fmt(total);
+    alertEl.className='cc-alert-bar danger';
+  }else if(daysLeft<=7){
+    alertEl.textContent='📅 Cierra en '+daysLeft+' días — acumulaste '+fmt(total)+' para pagar';
+    alertEl.className='cc-alert-bar warn';
+  }else{
+    alertEl.textContent='✓ Ciclo normal · '+cycleTx.length+(cycleTx.length===1?' movimiento':' movimientos')+' · '+fmt(total)+' acumulado';
+    alertEl.className='cc-alert-bar ok';
+  }
+}
+
+// ══════════════════════════════════════════
+//  PRÓXIMO COBRO
+// ══════════════════════
